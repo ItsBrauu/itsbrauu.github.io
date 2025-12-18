@@ -210,6 +210,10 @@
             <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png">
             <span>Discord</span>
         </a>
+        <a href="javascript:void(0)" class="icon" onclick="toggleWin('win-projects')">
+    <img src="https://cdn-icons-png.flaticon.com/512/5992/5992314.png">
+    <span>Proyectos</span>
+</a>
     </div>
 
     <div class="main-container">
@@ -297,9 +301,35 @@
                     </div>
                 </div>
             </div>
-
+<div class="window minimized" id="win-projects">
+    <div class="title-bar">
+        <span>Projects_2026.exe</span>
+        <div class="window-controls">
+            <div class="win-btn" onclick="toggleWin('win-projects')">_</div>
+        </div>
+    </div>
+    <div class="window-body" style="text-align: center; background: linear-gradient(135deg, #ffffff 0%, #d1e5ff 100%);">
+        <div style="padding: 20px;">
+            <img src="https://cdnl.iconscout.com/lottie/premium/thumb/loading-animation-gif-download-4450387.gif" style="width: 80px; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.2));">
+            
+            <h2 style="color: #0055e5; font-family: 'Trebuchet MS', sans-serif; margin: 10px 0;">PRÓXIMAMENTE</h2>
+            <p style="font-size: 12px; color: #555;">Cargando 2026...</p>
+            
+            <div style="width: 100%; height: 20px; border: 2px solid #0055e5; background: #fff; position: relative; margin-top: 15px; border-radius: 3px; overflow: hidden;">
+                <div style="width: 92%; height: 100%; background: repeating-linear-gradient(45deg, #3b91ff, #3b91ff 10px, #62a5ff 10px, #62a5ff 20px); animation: progressMove 2s linear infinite;"></div>
+            </div>
+            <span style="font-size: 10px; color: #0055e5; font-weight: bold; display: block; margin-top: 5px;">92% COMPLETADO</span>
+        </div>
+    </div>
+</div>
+<style>
+@keyframes progressMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+}
+</style>
             <div class="footer-loading">
-                <div class="created-by">CREADO POR BRAUU :3</div>
+                <div class="created-by">CREATED BY BRAUUSTUDIOS</div>
                 <div class="loading-bar-container">
                     <div class="loading-block"></div>
                 </div>
@@ -330,6 +360,10 @@
                 <img src="https://cdn-icons-png.flaticon.com/512/921/921347.png">
                 <span>Social</span>
             </div>
+            <div class="task-item" onclick="toggleWin('win-projects')">
+    <img src="https://cdn-icons-png.flaticon.com/512/5992/5992314.png">
+    <span>Proyectos</span>
+</div>
         </div>
 
         <div class="taskbar-time" id="clock">12:00 PM</div>
@@ -365,4 +399,3 @@
 
 </body>
 </html>
-
