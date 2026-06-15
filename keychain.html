@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MERTEK Keychain</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-main: #06080c;
+            --panel-bg: #0d111a;
+            --card-bg: #131a26;
+            --accent: #00ffcc;
+            --accent-glow: rgba(0, 255, 204, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --border: #1e293b;
+            --radius: 14px;
+            --warning-border: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            background: radial-gradient(circle at center, #111622 0%, #06080c 100%);
+        }
+
+        #control-panel {
+            width: 450px;
+            height: 100vh;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .brand-header { 
+            padding: 24px 24px 16px 24px; 
+            border-bottom: 1px solid var(--border);
+        }
+        .brand-header h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .brand-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--accent); letter-spacing: 2px; margin-top: 2px; font-weight: 700; }
+
+        .tabs-nav {
+            display: flex;
+            background: #080c14;
+            border-bottom: 1px solid var(--border);
+            padding: 4px;
+            gap: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 12px 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--accent);
+            box-shadow: inset 0 0 0 1px var(--border);
+        }
+
+        .tabs-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .tabs-content::-webkit-scrollbar { width: 6px; }
+        .tabs-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 20px; }
+
+        .tab-panel { display: none; flex-direction: column; gap: 16px; }
+        .tab-panel.active { display: flex; }
+
+        .section-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: var(--radius); 
+            padding: 18px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 14px; 
+        }
+
+        /* Estilo para la Alerta de Optimización 3D */
+        .notice-card {
+            background: var(--warning-bg);
+            border: 1px dashed var(--warning-border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .notice-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .notice-text {
+            font-size: 0.78rem;
+            line-height: 1.42;
+            color: #cbd5e1;
+        }
+        .notice-text strong {
+            color: #fff;
+        }
+
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        label { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 600; color: #94a3b8; }
+        label span { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+
+        input[type="text"], select { width: 100%; background: #080c14; border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; outline: none; transition: all 0.2s ease; }
+        input[type="text"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: #080c14; height: 5px; border-radius: 10px; outline: none; margin: 8px 0; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--card-bg); }
+
+        .color-grid { display: flex; gap: 12px; }
+        .color-wrapper { flex: 1; display: flex; align-items: center; background: #080c14; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; gap: 10px; }
+        .color-wrapper label { margin-bottom: 0; font-size: 0.72rem; }
+        input[type="color"] { -webkit-appearance: none; border: none; width: 26px; height: 26px; cursor: pointer; background: transparent; }
+        input[type="color"]::-webkit-color-swatch { border: 1px solid var(--border); border-radius: 50%; }
+
+        .footer-actions { padding: 16px 24px 24px 24px; border-top: 1px solid var(--border); background: var(--panel-bg); }
+        .btn-export { background: #fff; color: #000; border: none; width: 100%; padding: 14px; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-radius: var(--radius); cursor: pointer; transition: all 0.2s ease; }
+        .btn-export:hover { background: var(--accent); box-shadow: 0 4px 20px var(--accent-glow); }
+
+        .hud-ui { position: absolute; bottom: 20px; left: 20px; background: rgba(6, 8, 12, 0.85); backdrop-filter: blur(8px); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.68rem; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); pointer-events: none; line-height: 1.6; }
+        .hud-ui span { color: var(--accent); }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #canvas-container { width: 100vw; height: 45vh; }
+            #control-panel { width: 100vw; height: 55vh; border-left: none; border-top: 1px solid var(--border); }
+            .brand-header { padding: 12px 16px 8px 16px; }
+            .tabs-content { padding: 12px 16px; }
+            .hud-ui { display: none; }
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container">
+        <div class="hud-ui">
+            <span>Arrastrar:</span> Rotar vista 3D | <span>Rueda:</span> Zoom de cámara
+        </div>
+    </div>
+
+    <div id="control-panel">
+        <div class="brand-header">
+            <h1>MERTEK Keychain</h1>
+            <div class="brand-subtitle">MERTEK ADVANCED 3D</div>
+        </div>
+
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="switchTab(this, 'tab-texts')">Textos</button>
+            <button class="tab-btn" onclick="switchTab(this, 'tab-ring')">Argolla</button>
+            <button class="tab-btn" onclick="switchTab(this, 'tab-base')">Base e Impresión</button>
+        </div>
+
+        <div class="tabs-content">
+            
+            <div id="tab-texts" class="tab-panel active">
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Texto Principal</label>
+                        <input type="text" id="text-input" value="NAME" maxlength="12">
+                    </div>
+                    <div class="control-group">
+                        <label>Tamaño Principal: <span id="val-text-size">13</span>mm</label>
+                        <input type="range" id="text-size" min="9" max="22" step="0.5" value="13">
+                    </div>
+                    <div class="control-group">
+                        <label>Espesor Letra Principal (Z): <span id="val-text-thick">4.0</span>mm</label>
+                        <input type="range" id="text-thick" min="2.0" max="7.0" step="0.5" value="4.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Espaciado de Letras: <span id="val-text-spacing">1.1</span></label>
+                        <input type="range" id="text-spacing" min="0.8" max="1.8" step="0.05" value="1.1">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Texto Secundario</label>
+                        <input type="text" id="text-sub-input" value="DEVELOPED BY MERTEK" maxlength="26">
+                    </div>
+                    <div class="control-group">
+                        <label>Tamaño Secundario: <span id="val-text-sub-size">3.2</span>mm</label>
+                        <input type="range" id="text-sub-size" min="2.0" max="6.0" step="0.1" value="3.2">
+                    </div>
+                    <div class="control-group">
+                        <label>Espesor Secundario (Z): <span id="val-text-sub-thick">3.0</span>mm</label>
+                        <input type="range" id="text-sub-thick" min="1.5" max="6.0" step="0.5" value="3.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Ajuste de Altura Y (Texto Sub): <span id="val-text-sub-y">0.0</span>mm</label>
+                        <input type="range" id="text-sub-y" min="-10" max="10" step="0.5" value="0">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Tipografía</label>
+                        <select id="text-font">
+                            <option value="helvetiker_bold">Helvetiker Bold</option>
+                            <option value="helvetiker_regular">Helvetiker Regular</option>
+                            <option value="gentilis_bold">Gentilis Bold</option>
+                            <option value="gentilis_regular">Gentilis Regular</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Modo de Efecto Estructural</label>
+                        <select id="text-effect">
+                            <option value="none">Texto Plano Estándar</option>
+                            <option value="wave">Efecto Ola Senoidal</option>
+                            <option value="arc">Efecto Curvatura en Arco</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Intensidad de Deformación: <span id="val-effect-intensity">35</span>%</label>
+                        <input type="range" id="effect-intensity" min="10" max="90" value="35">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-ring" class="tab-panel">
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Ubicación Rápida (Presets)</label>
+                        <select id="ring-preset">
+                            <option value="custom">-- Control Manual Libre --</option>
+                            <option value="left" selected>Extremo Izquierdo</option>
+                            <option value="right">Extremo Derecho</option>
+                            <option value="top">Centrado Arriba</option>
+                            <option value="bottom">Centrado Abajo</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Posición Horizontal (X): <span id="val-ring-x">-30</span>mm</label>
+                        <input type="range" id="ring-x" min="-80" max="80" step="0.5" value="-30">
+                    </div>
+                    <div class="control-group">
+                        <label>Posición Vertical (Y): <span id="val-ring-y">0</span>mm</label>
+                        <input type="range" id="ring-y" min="-40" max="40" step="0.5" value="0">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Diámetro Interno (Agujero): <span id="val-ring-inner">5.0</span>mm</label>
+                        <input type="range" id="ring-inner" min="3.0" max="8.0" step="0.2" value="5.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Grosor del Anillo (Pared): <span id="val-ring-wall">3.0</span>mm</label>
+                        <input type="range" id="ring-wall" min="2.0" max="6.0" step="0.2" value="3.0">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-base" class="tab-panel">
+                <div class="notice-card">
+                    <div class="notice-title">
+                        ⚠️ Optimización de Impresión
+                    </div>
+                    <div class="notice-text">
+                        Como esta herramienta web de <strong>MERTEK</strong> está en fase de desarrollo beta, al importar el archivo en tu rebanador (Bambu Studio, Cura, etc.), se recomienda dar click derecho al modelo y seleccionar <strong>"Reparar"</strong> o <strong>"Fijar Modelo"</strong>. Esto recalcula los contornos internos de forma perfecta para asegurar un laminado 100% limpio.
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Estilo de Placa</label>
+                        <select id="base-style">
+                            <option value="rounded-rect">Rectángulo de Esquinas Suaves</option>
+                            <option value="sharp-rect">Placa Recta Industrial</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Grosor de Placa Base: <span id="val-base-thick">2.5</span>mm</label>
+                        <input type="range" id="base-thick" min="1.5" max="5.0" step="0.5" value="2.5">
+                    </div>
+                    <div class="control-group">
+                        <label>Margen Expandido: <span id="val-base-margin">6.0</span>mm</label>
+                        <input type="range" id="base-margin" min="4.0" max="12.0" step="0.5" value="6.0">
+                    </div>
+                    <div class="control-group">
+                        <label>Radio de Esquinas Base: <span id="val-corner-radius">1.3</span></label>
+                        <input type="range" id="corner-radius" min="0.5" max="2.5" step="0.1" value="1.3">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="control-group">
+                        <label>Suavizado de Bordes (Bisel): <span id="val-bevel-size">0.2</span>mm</label>
+                        <input type="range" id="bevel-size" min="0.0" max="0.5" step="0.05" value="0.2">
+                    </div>
+                    <div class="control-group">
+                        <label>Segmentos de Curva (Resolución): <span id="val-curve-segments">24</span></label>
+                        <input type="range" id="curve-segments" min="8" max="42" step="2" value="24">
+                    </div>
+                </div>
+
+                <div class="section-card">
+                    <div class="color-grid">
+                        <div class="color-wrapper">
+                            <input type="color" id="base-color" value="#111827">
+                            <label>Base</label>
+                        </div>
+                        <div class="color-wrapper">
+                            <input type="color" id="text-color-input" value="#00ffcc">
+                            <label>Letras</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer-actions">
+            <button class="btn-export" id="btn-export-stl">Exportar archivo .STL</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(element, tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            element.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+
+        const camera = new THREE.PerspectiveCamera(38, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, -95, 95);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+        scene.add(ambientLight);
+
+        const topLight = new THREE.DirectionalLight(0xffffff, 0.85);
+        topLight.position.set(30, -50, 90);
+        topLight.castShadow = true;
+        scene.add(topLight);
+
+        const fillLight = new THREE.DirectionalLight(0x00ffcc, 0.25);
+        fillLight.position.set(-40, 40, 30);
+        scene.add(fillLight);
+
+        let mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        const baseMat = new THREE.MeshStandardMaterial({ roughness: 0.35, metalness: 0.1 });
+        const textMat = new THREE.MeshStandardMaterial({ roughness: 0.2, metalness: 0.15 });
+
+        const fontsCache = {};
+        let currentFontName = 'helvetiker_bold';
+        const fontUrls = {
+            'helvetiker_bold': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_bold.typeface.json',
+            'helvetiker_regular': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json',
+            'gentilis_bold': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/gentilis_bold.typeface.json',
+            'gentilis_regular': 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/gentilis_regular.typeface.json'
+        };
+
+        function loadFontAndBuild(name) {
+            currentFontName = name;
+            if (fontsCache[name]) {
+                rebuildKeychain();
+            } else {
+                new THREE.FontLoader().load(fontUrls[name], function(font) {
+                    fontsCache[name] = font;
+                    rebuildKeychain();
+                });
+            }
+        }
+
+        function rebuildKeychain() {
+            const font = fontsCache[currentFontName];
+            if (!font) return;
+
+            while(mainGroup.children.length > 0) {
+                mainGroup.remove(mainGroup.children[0]);
+            }
+
+            const textStr = document.getElementById('text-input').value || " ";
+            const textSubStr = document.getElementById('text-sub-input').value || "";
+            const textSize = parseFloat(document.getElementById('text-size').value);
+            const textThick = parseFloat(document.getElementById('text-thick').value);
+            const textSpacing = parseFloat(document.getElementById('text-spacing').value);
+            const baseThick = parseFloat(document.getElementById('base-thick').value);
+            const margin = parseFloat(document.getElementById('base-margin').value);
+            const baseStyle = document.getElementById('base-style').value;
+            const rInner = parseFloat(document.getElementById('ring-inner').value);
+            const rWall = parseFloat(document.getElementById('ring-wall').value);
+            const textEffect = document.getElementById('text-effect').value;
+            const effectIntensity = parseFloat(document.getElementById('effect-intensity').value) / 100;
+            const bevelVal = parseFloat(document.getElementById('bevel-size').value);
+            const cRadiusFactor = parseFloat(document.getElementById('corner-radius').value);
+            const segmentsVal = parseInt(document.getElementById('curve-segments').value);
+
+            const textSubSize = parseFloat(document.getElementById('text-sub-size').value);
+            const textSubThick = parseFloat(document.getElementById('text-sub-thick').value);
+            const textSubYOffset = parseFloat(document.getElementById('text-sub-y').value);
+
+            let ringX = parseFloat(document.getElementById('ring-x').value);
+            let ringY = parseFloat(document.getElementById('ring-y').value);
+
+            baseMat.color.set(document.getElementById('base-color').value);
+            textMat.color.set(document.getElementById('text-color-input').value);
+
+            // TEXTO PRINCIPAL
+            const charsGroup = new THREE.Group();
+            let totalWidth = 0;
+            const charMeshes = [];
+            const positionsX = [];
+
+            for (let i = 0; i < textStr.length; i++) {
+                const charGeo = new THREE.TextGeometry(textStr[i], {
+                    font: font, size: textSize, height: textThick,
+                    curveSegments: 6, bevelEnabled: bevelVal > 0, bevelThickness: bevelVal, bevelSize: bevelVal * 0.5
+                });
+                charGeo.computeBoundingBox();
+                let w = charGeo.boundingBox ? (charGeo.boundingBox.max.x - charGeo.boundingBox.min.x) : textSize * 0.4;
+                if (w === 0 || textStr[i] === " ") w = textSize * 0.4;
+                charMeshes.push({ mesh: new THREE.Mesh(charGeo, textMat), width: w });
+                positionsX.push(totalWidth);
+                totalWidth += w * textSpacing;
+            }
+
+            const halfTextWidth = totalWidth / 2;
+
+            charMeshes.forEach((item, index) => {
+                const m = item.mesh;
+                let localX = positionsX[index] - halfTextWidth + (item.width / 2);
+                let localY = 0;
+                let localRotZ = 0;
+
+                if (textEffect === 'wave') {
+                    localY = Math.sin((localX / halfTextWidth) * Math.PI) * (textSize * 0.35) * effectIntensity;
+                    localRotZ = Math.cos((localX / halfTextWidth) * Math.PI) * 0.25 * effectIntensity;
+                } else if (textEffect === 'arc') {
+                    const normX = localX / halfTextWidth;
+                    localY = (1 - normX * normX) * (textSize * 0.4) * effectIntensity;
+                    localRotZ = -normX * 0.4 * effectIntensity;
+                }
+
+                m.position.set(localX - (item.width / 2), localY - (textSize / 2), baseThick);
+                m.rotation.z = localRotZ;
+                m.castShadow = true;
+                charsGroup.add(m);
+            });
+            mainGroup.add(charsGroup);
+
+            let minX = -halfTextWidth - margin;
+            let maxX = halfTextWidth + margin;
+            let minY = -textSize/2 - margin;
+            let maxY = textSize/2 + margin;
+
+            if (textEffect === 'wave' || textEffect === 'arc') {
+                maxY += (textSize * 0.4) * effectIntensity;
+                minY -= (textSize * 0.3) * effectIntensity;
+            }
+            if (textSubStr.length > 0) minY -= (textSize * 0.5);
+
+            const centerY = (maxY + minY) / 2;
+
+            const rRadiusInner = rInner / 2;
+            const rRadiusOuter = rRadiusInner + rWall;
+
+            const preset = document.getElementById('ring-preset').value;
+            if (preset !== 'custom') {
+                if (preset === 'left') { ringX = minX - rRadiusOuter * 0.2; ringY = centerY; }
+                else if (preset === 'right') { ringX = maxX + rRadiusOuter * 0.2; ringY = centerY; }
+                else if (preset === 'top') { ringX = 0; ringY = maxY + rRadiusOuter * 0.2; }
+                else if (preset === 'bottom') { ringX = 0; ringY = minY - rRadiusOuter * 0.2; }
+                
+                document.getElementById('ring-x').value = ringX;
+                document.getElementById('ring-y').value = ringY;
+                document.getElementById('val-ring-x').innerText = ringX;
+                document.getElementById('val-ring-y').innerText = ringY;
+            }
+
+            // TEXTO SECUNDARIO
+            if (textSubStr.length > 0) {
+                const subGeo = new THREE.TextGeometry(textSubStr, {
+                    font: font, size: textSubSize, height: textSubThick,
+                    curveSegments: 4, bevelEnabled: false
+                });
+                subGeo.computeBoundingBox();
+                const subWidth = subGeo.boundingBox.max.x - subGeo.boundingBox.min.x;
+                const subMesh = new THREE.Mesh(subGeo, textMat);
+                subMesh.position.set(-subWidth / 2, minY + (margin * 0.5) + textSubYOffset, baseThick);
+                mainGroup.add(subMesh);
+            }
+
+            // CONSTRUCCIÓN DE LA PLACA BASE
+            const baseShape = new THREE.Shape();
+            const radius = margin * cRadiusFactor;
+
+            if (baseStyle === 'sharp-rect') {
+                baseShape.moveTo(minX, minY);
+                baseShape.lineTo(maxX, minY);
+                baseShape.lineTo(maxX, maxY);
+                baseShape.lineTo(minX, maxY);
+            } else {
+                baseShape.moveTo(minX + radius, minY);
+                baseShape.lineTo(maxX - radius, minY);
+                baseShape.quadraticCurveTo(maxX, minY, maxX, minY + radius);
+                baseShape.lineTo(maxX, maxY - radius);
+                baseShape.quadraticCurveTo(maxX, maxY, maxX - radius, maxY);
+                baseShape.lineTo(minX + radius, maxY);
+                baseShape.quadraticCurveTo(minX, maxY, minX, maxY - radius);
+                baseShape.lineTo(minX, minY + radius);
+                baseShape.quadraticCurveTo(minX, minY, minX + radius, minY);
+            }
+            baseShape.closePath();
+
+            const extrudeOpts = {
+                depth: baseThick, bevelEnabled: bevelVal > 0, bevelSegments: 3,
+                steps: 1, bevelSize: bevelVal, bevelThickness: bevelVal,
+                curveSegments: segmentsVal
+            };
+
+            const singleHole = new THREE.Path();
+            singleHole.absarc(ringX, ringY, rRadiusInner, 0, Math.PI * 2, true);
+
+            const separateRingShape = new THREE.Shape();
+            separateRingShape.absarc(ringX, ringY, rRadiusOuter, 0, Math.PI * 2, false);
+            separateRingShape.holes.push(singleHole);
+
+            baseShape.holes.push(singleHole);
+
+            const baseGeometry = new THREE.ExtrudeGeometry(baseShape, extrudeOpts);
+            const baseMesh = new THREE.Mesh(baseGeometry, baseMat);
+            baseMesh.receiveShadow = baseMesh.castShadow = true;
+            mainGroup.add(baseMesh);
+
+            const ringGeometry = new THREE.ExtrudeGeometry(separateRingShape, extrudeOpts);
+            const ringMesh = new THREE.Mesh(ringGeometry, baseMat);
+            ringMesh.receiveShadow = ringMesh.castShadow = true;
+            mainGroup.add(ringMesh);
+        }
+
+        const controlsMap = [
+            'text-input', 'text-sub-input', 'text-size', 'text-thick', 'text-spacing',
+            'base-thick', 'base-margin', 'base-style', 'ring-x', 'ring-y',
+            'ring-inner', 'ring-wall', 'text-effect', 'effect-intensity',
+            'base-color', 'text-color-input', 'bevel-size', 'corner-radius', 'curve-segments',
+            'text-sub-size', 'text-sub-thick', 'text-sub-y'
+        ];
+
+        controlsMap.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                if (id === 'ring-x' || id === 'ring-y') {
+                    document.getElementById('ring-preset').value = 'custom';
+                }
+                const indicator = document.getElementById(`val-${id}`);
+                if (indicator) indicator.innerText = el.value;
+                rebuildKeychain();
+            });
+        });
+
+        document.getElementById('ring-preset').addEventListener('change', () => {
+            rebuildKeychain();
+        });
+
+        document.getElementById('text-font').addEventListener('change', (e) => {
+            loadFontAndBuild(e.target.value);
+        });
+
+        document.getElementById('btn-export-stl').addEventListener('click', () => {
+            const exporter = new THREE.STLExporter();
+            const result = exporter.parse(mainGroup, { binary: true });
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            const fileName = (document.getElementById('text-input').value || 'keychain').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            
+            link.href = URL.createObjectURL(blob);
+            link.download = `mertek_3d_${fileName}.stl`;
+            link.click();
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        loadFontAndBuild('helvetiker_bold');
+        animate();
+    </script>
+</body>
+</html>
